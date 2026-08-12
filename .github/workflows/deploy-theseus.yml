@@ -1,4 +1,4 @@
-name: Deploy Hello World
+name: Deploy Theseus and the Labyrinth
 
 on:
   push:
