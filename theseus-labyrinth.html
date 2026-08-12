@@ -244,10 +244,28 @@
   @media (min-width:720px){
     .dpad{ display:none; }
   }
+  .back-link{
+    font-family:'Cinzel', serif;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    text-decoration:none;
+    border:1px solid rgba(212,160,23,0.3);
+    padding:6px 14px;
+    border-radius:2px;
+    transition:color .15s ease, border-color .15s ease;
+  }
+  .back-link:hover, .back-link:focus-visible{
+    color:var(--gold-bright);
+    border-color:rgba(212,160,23,0.6);
+  }
+  .back-link::before{ content:"‹ "; }
 </style>
 </head>
 <body>
 
+  <a class="back-link" href="menu.html">Myths at Play</a>
   <p class="eyebrow">A Homage to the Endless Chase</p>
   <h1>Theseus and the Labyrinth</h1>
   <div class="meander"></div>
