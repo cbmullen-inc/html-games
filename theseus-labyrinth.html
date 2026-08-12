@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Theseus and the Labyrinth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700;900&family=EB+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0b0806;
+    --void-2:#161009;
+    --clay:#b5541f;
+    --clay-dark:#6e3212;
+    --clay-line:#8a3f16;
+    --gold:#d4a017;
+    --gold-bright:#f0c95e;
+    --parchment:#e9dcc4;
+    --parchment-dim:#a99a80;
+    --blood:#8c2a1c;
+    --rust:#a8501f;
+    --umber:#6b4423;
+    --plum:#5c3050;
+    --fear:#c9d6d8;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:
+      radial-gradient(ellipse at top, #1a120b 0%, var(--void) 55%),
+      var(--void);
+    color:var(--parchment);
+    font-family:'EB Garamond', serif;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior:none;
+  }
+  body{
+    display:flex; flex-direction:column; align-items:center;
+    min-height:100%;
+    padding:22px 14px 30px;
+    gap:14px;
+  }
+
+  /* ---------- Header / wordmark ---------- */
+  .eyebrow{
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    font-size:13px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    margin:0;
+  }
+  h1{
+    font-family:'Cinzel Decorative', serif;
+    font-weight:900;
+    font-size:clamp(28px, 6vw, 42px);
+    letter-spacing:.06em;
+    color:var(--gold-bright);
+    margin:2px 0 0 0;
+    text-shadow: 0 0 18px rgba(212,160,23,0.35), 0 2px 0 rgba(0,0,0,0.6);
+  }
+  .meander{
+    width:min(560px, 92vw);
+    height:14px;
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--clay) 0 6px, transparent 6px 8px
+    );
+    opacity:.55;
+    mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+  }
+
+  /* ---------- HUD ---------- */
+  .hud{
+    width:min(560px, 92vw);
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'Cinzel', serif;
+    font-size:13px;
+    letter-spacing:.05em;
+    color:var(--parchment);
+  }
+  .hud .block{ display:flex; align-items:center; gap:8px; }
+  .hud .label{ color:var(--parchment-dim); font-size:11px; text-transform:uppercase; letter-spacing:.12em;}
+  .hud .value{ color:var(--gold-bright); font-size:16px; min-width:2ch; display:inline-block; text-align:right;}
+  .lives{ display:flex; gap:5px; }
+  .lives svg{ width:16px; height:16px; }
+
+  /* ---------- Game frame ---------- */
+  .frame-wrap{
+    position:relative;
+    width:min(560px, 94vw);
+    aspect-ratio:1/1;
+    padding:10px;
+    background:
+      linear-gradient(var(--void-2), var(--void-2)) padding-box,
+      repeating-linear-gradient(45deg, var(--clay) 0 4px, var(--clay-dark) 4px 8px) border-box;
+    border:7px solid transparent;
+    border-radius:4px;
+    box-shadow: 0 0 0 1px rgba(212,160,23,0.25), 0 18px 50px rgba(0,0,0,0.6), inset 0 0 40px rgba(0,0,0,0.5);
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+    background:var(--void);
+    border-radius:2px;
+    touch-action:none;
+  }
+
+  .overlay{
+    position:absolute; inset:10px;
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    background:rgba(6,4,2,0.88);
+    border-radius:2px;
+    padding:20px;
+    gap:14px;
+  }
+  .overlay.show{ display:flex; }
+  .overlay h2{
+    font-family:'Cinzel Decorative', serif;
+    font-size:clamp(20px,5vw,30px);
+    color:var(--gold-bright);
+    margin:0;
+    letter-spacing:.04em;
+  }
+  .overlay p{
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    color:var(--parchment-dim);
+    max-width:36ch;
+    margin:0;
+    line-height:1.5;
+    font-size:15px;
+  }
+  .btn{
+    font-family:'Cinzel', serif;
+    font-size:13px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    background:linear-gradient(var(--clay), var(--clay-dark));
+    color:var(--parchment);
+    border:1px solid var(--gold);
+    padding:11px 26px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{ transform:translateY(-1px); box-shadow:0 4px 14px rgba(212,160,23,0.3); }
+  .btn:active{ transform:translateY(0px); }
+
+  /* ---------- Touch controls ---------- */
+  .dpad{
+    display:grid;
+    grid-template-columns:52px 52px 52px;
+    grid-template-rows:52px 52px 52px;
+    gap:6px;
+    margin-top:2px;
+  }
+  .dpad button{
+    background:linear-gradient(var(--clay), var(--clay-dark));
+    border:1px solid var(--clay-line);
+    border-radius:6px;
+    color:var(--parchment);
+    font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-user-select:none; user-select:none;
+    touch-action:none;
+  }
+  .dpad button:active{ background:var(--gold); }
+  .dpad .up{grid-column:2; grid-row:1;}
+  .dpad .left{grid-column:1; grid-row:2;}
+  .dpad .down{grid-column:2; grid-row:3;}
+  .dpad .right{grid-column:3; grid-row:2;}
+  .dpad .mid{grid-column:2; grid-row:2; background:none; border:none;}
+
+  .hint{
+    font-size:12px;
+    color:var(--parchment-dim);
+    font-style:italic;
+    text-align:center;
+  }
+  @media (min-width:720px){
+    .dpad{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+  <p class="eyebrow">A Homage to the Endless Chase</p>
+  <h1>Theseus and the Labyrinth</h1>
+  <div class="meander"></div>
+
+  <div class="hud">
+    <div class="block">
+      <span class="label">Score</span>
+      <span class="value" id="score">0</span>
+    </div>
+    <div class="block">
+      <span class="label">Thread</span>
+      <span class="value" id="pelletsLeft">0</span>
+    </div>
+    <div class="block">
+      <span class="label">Theseus</span>
+      <span class="lives" id="lives"></span>
+    </div>
+  </div>
+
+  <div class="frame-wrap">
+    <canvas id="game"></canvas>
+    <div class="overlay show" id="startOverlay">
+      <h2>The Labyrinth Awaits</h2>
+      <p>Guide Theseus through the winding halls. Gather Ariadne's thread to survive, and beware the four Minotaurs who guard the maze. Find a golden spool and, for a moment, the hunted becomes the hunter.</p>
+      <button class="btn" id="startBtn">Enter the Labyrinth</button>
+      <p class="hint">Arrow keys / WASD to move &middot; swipe or use the pad below on touch</p>
+    </div>
+    <div class="overlay" id="loseOverlay">
+      <h2>The Minotaur Claims You</h2>
+      <p id="loseScore"></p>
+      <button class="btn" id="retryBtn">Try Again</button>
+    </div>
+    <div class="overlay" id="winOverlay">
+      <h2>You Have Escaped</h2>
+      <p id="winScore"></p>
+      <button class="btn" id="nextBtn">Descend Deeper</button>
+    </div>
+  </div>
+
+  <div class="dpad" id="dpad">
+    <button class="up" data-dir="up">▲</button>
+    <button class="left" data-dir="left">◀</button>
+    <div class="mid"></div>
+    <button class="right" data-dir="right">▶</button>
+    <button class="down" data-dir="down">▼</button>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================
+     MAZE DATA
+     Procedurally generated (seeded), hand-tuned: symmetric,
+     looped (not a perfect maze) so the Minotaurs can be juked,
+     with a central pen ("the Lair") and a side tunnel.
+     1 = wall, 0 = path
+  ========================================================= */
+  const MAZE_ROWS = [
+    "###################",
+    "#...#.........#...#",
+    "###.#.#.###.#.#.###",
+    "#...#.#.#.#.#.#...#",
+    "#.#.#.#.#.#.#.#.#.#",
+    "#.....#.....#.....#",
+    "#.#.###.###.###.#.#",
+    "#...#.........#...#",
+    "###.#.#.....#.#.###",
+    "..#...#.....#...#..",
+    "#.#.###.....###.#.#",
+    "#.....#.....#.....#",
+    "#.###.#.###.#.###.#",
+    "#...#.........#...#",
+    "#.#.#.###.###.#.#.#",
+    "#...#.........#...#",
+    "###.###.###.###.###",
+    "#.....#.....#.....#",
+    "###################"
+  ];
+  const COLS = MAZE_ROWS[0].length; // 19
+  const ROWS = MAZE_ROWS.length;    // 19
+  const TUNNEL_ROW = 9;
+
+  function isWall(cx, cy){
+    if (cy < 0 || cy >= ROWS) return true;
+    if (cx < 0 || cx >= COLS){
+      // tunnel row wraps
+      if (cy === TUNNEL_ROW) return false;
+      return true;
+    }
+    return MAZE_ROWS[cy][cx] === '#';
+  }
+  function wrapX(cx){
+    if (cx < 0) return COLS - 1;
+    if (cx >= COLS) return 0;
+    return cx;
+  }
+
+  const PEN = {x0:8, x1:10, y0:8, y1:10}; // lair box (inclusive)
+  function inPen(cx, cy){
+    return cx>=PEN.x0 && cx<=PEN.x1 && cy>=PEN.y0 && cy<=PEN.y1;
+  }
+
+  const POWER_SPOTS = [
+    {x:1, y:1}, {x:17, y:1}, {x:1, y:17}, {x:17, y:17}
+  ];
+  function isPowerSpot(cx, cy){
+    return POWER_SPOTS.some(p => p.x===cx && p.y===cy);
+  }
+
+  const PLAYER_START = {x:9, y:17};
+  const CORNERS = { // scatter targets for patrol/erratic personalities
+    tl:{x:0,y:0}, tr:{x:COLS-1,y:0}, bl:{x:0,y:ROWS-1}, br:{x:COLS-1,y:ROWS-1}
+  };
+
+  /* =========================================================
+     CANVAS / SCALE
+  ========================================================= */
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  let TILE = 28;
+  function resizeCanvas(){
+    const wrap = canvas.parentElement;
+    const cssSize = wrap.clientWidth - 20; // minus padding
+    canvas.width = COLS * 28;
+    canvas.height = ROWS * 28;
+    canvas.style.width = cssSize + 'px';
+    canvas.style.height = cssSize + 'px';
+    TILE = 28;
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  /* =========================================================
+     PELLETS
+  ========================================================= */
+  let pellets; // Set of "x,y" -> 'p' normal or 'P' power
+  function keyOf(x,y){ return x+','+y; }
+
+  function resetPellets(){
+    pellets = new Map();
+    for (let y=0;y<ROWS;y++){
+      for (let x=0;x<COLS;x++){
+        if (isWall(x,y)) continue;
+        if (inPen(x,y)) continue;
+        if (x===PLAYER_START.x && y===PLAYER_START.y) continue;
+        if (isPowerSpot(x,y)) { pellets.set(keyOf(x,y), 'P'); continue; }
+        pellets.set(keyOf(x,y), 'p');
+      }
+    }
+  }
+
+  /* =========================================================
+     ENTITIES
+     Grid-snapped movement: each entity has cell (cx,cy), a
+     sub-tile offset (0..1) it is travelling through toward
+     the next cell, current direction, and a queued/desired
+     direction that gets applied as soon as it's legal (at a
+     tile centre) — this is the classic buffered-turn feel.
+  ========================================================= */
+  const DIRS = {
+    up:    {dx:0, dy:-1},
+    down:  {dx:0, dy:1},
+    left:  {dx:-1,dy:0},
+    right: {dx:1, dy:0},
+    none:  {dx:0, dy:0}
+  };
+  const OPPOSITE = {up:'down', down:'up', left:'right', right:'left', none:'none'};
+
+  function canEnter(cx, cy){
+    if (isWall(cx, wrapX===undefined?cy:cy)) return false;
+    return true;
+  }
+  function canMove(cx, cy, dir){
+    const d = DIRS[dir];
+    let nx = cx + d.dx, ny = cy + d.dy;
+    if (ny === TUNNEL_ROW) nx = wrapX(nx);
+    return !isWall(nx, ny);
+  }
+
+  function makeEntity(cx, cy, speed){
+    return { cx, cy, sx:cx, sy:cy, dir:'none', queued:'none', speed, prog:0 };
+  }
+
+  /* step an entity along its current direction using a fixed
+     progress-per-frame; when it reaches the next cell, snaps
+     and re-evaluates queued direction / AI decision. Returns
+     true if it just landed on a new cell (decision point). */
+  function advance(ent, dt, requestDir){
+    if (ent.dir === 'none'){
+      const want = requestDir(ent);
+      if (want !== 'none' && canMove(ent.cx, ent.cy, want)){
+        ent.dir = want;
+      } else {
+        return false;
+      }
+    }
+    ent.prog += ent.speed * dt;
+    let landed = false;
+    while (ent.prog >= 1){
+      ent.prog -= 1;
+      const d = DIRS[ent.dir];
+      let nx = ent.cx + d.dx, ny = ent.cy + d.dy;
+      if (ny === TUNNEL_ROW) nx = wrapX(nx);
+      ent.cx = nx; ent.cy = ny;
+      landed = true;
+
+      const want = requestDir(ent);
+      if (want !== 'none' && canMove(ent.cx, ent.cy, want)){
+        ent.dir = want;
+      } else if (!canMove(ent.cx, ent.cy, ent.dir)){
+        ent.dir = 'none';
+        ent.prog = 0;
+        break;
+      }
+    }
+    const d = DIRS[ent.dir];
+    ent.sx = ent.cx + d.dx * ent.prog;
+    ent.sy = ent.cy + d.dy * ent.prog;
+    if (ent.dir === 'none'){ ent.sx = ent.cx; ent.sy = ent.cy; }
+    return landed;
+  }
+
+  /* =========================================================
+     PATHFINDING (BFS) — used by the Chase & Ambush minotaurs
+  ========================================================= */
+  function bfsNextStep(fromX, fromY, toX, toY, forbidDir){
+    if (fromX===toX && fromY===toY) return 'none';
+    const key = (x,y)=>x+','+y;
+    const visited = new Set([key(fromX,fromY)]);
+    const queue = [{x:fromX,y:fromY,first:null}];
+    let qi = 0;
+    const order = ['up','left','down','right'];
+    while (qi < queue.length){
+      const cur = queue[qi++];
+      for (const dname of order){
+        if (cur.first === null && dname === forbidDir) continue; // can't reverse out of the gate
+        const d = DIRS[dname];
+        let nx = cur.x + d.dx, ny = cur.y + d.dy;
+        if (ny === TUNNEL_ROW) nx = wrapX(nx);
+        if (isWall(nx, ny)) continue;
+        const k = key(nx,ny);
+        if (visited.has(k)) continue;
+        visited.add(k);
+        const first = cur.first === null ? dname : cur.first;
+        if (nx === toX && ny === toY) return first;
+        queue.push({x:nx, y:ny, first});
+        if (queue.length > 500) return 'none'; // safety valve
+      }
+    }
+    return 'none';
+  }
+
+  /* =========================================================
+     GAME STATE
+  ========================================================= */
+  const state = {
+    running:false,
+    score:0,
+    lives:3,
+    level:1,
+    frightTimer:0,
+    frightDuration:8,
+    comboCount:0,
+    player:null,
+    minotaurs:[],
+    keys:{},
+    lastTime:0,
+    invuln:0
+  };
+
+  const PERSONALITIES = [
+    { id:'chase',   name:'Asterion', color:'#8c2a1c', glow:'rgba(140,42,28,0.55)' },
+    { id:'ambush',  name:'Deukalion',color:'#a8501f', glow:'rgba(168,80,31,0.55)' },
+    { id:'patrol',  name:'Kadmos',   color:'#6b4423', glow:'rgba(107,68,35,0.55)' },
+    { id:'erratic', name:'Argos',    color:'#5c3050', glow:'rgba(92,48,80,0.55)' }
+  ];
+
+  function spawnPositions(){
+    return [
+      {x:9, y:9}, {x:8, y:9}, {x:10,y:9}, {x:9, y:8}
+    ];
+  }
+
+  function newGame(){
+    resetPellets();
+    state.score = 0;
+    state.lives = 3;
+    state.level = 1;
+    state.comboCount = 0;
+    setupLevel();
+    updateHud();
+  }
+
+  function setupLevel(){
+    state.frightTimer = 0;
+    state.player = makeEntity(PLAYER_START.x, PLAYER_START.y, 5.0 + state.level*0.15);
+    state.player.desired = 'none';
+    state.player.mouth = 0;
+
+    const spots = spawnPositions();
+    state.minotaurs = PERSONALITIES.map((p, i) => {
+      const s = spots[i];
+      const m = makeEntity(s.x, s.y, 4.2 + state.level*0.12);
+      m.personality = p;
+      m.frightened = false;
+      m.dead = false; // "slain" -> returning to lair
+      m.scatterTarget = Object.values(CORNERS)[i % 4];
+      m.eyeDir = 'down';
+      return m;
+    });
+    state.invuln = 1.2;
+  }
+
+  function updateHud(){
+    document.getElementById('score').textContent = state.score;
+    let left = 0;
+    pellets.forEach(()=>left++);
+    document.getElementById('pelletsLeft').textContent = left;
+    const livesEl = document.getElementById('lives');
+    livesEl.innerHTML = '';
+    for (let i=0;i<state.lives;i++){
+      livesEl.innerHTML += '<svg viewBox="0 0 24 24"><path d="M12 2 L15 9 L22 10 L17 15 L18 22 L12 18.5 L6 22 L7 15 L2 10 L9 9 Z" fill="'+ '#d4a017' +'"/></svg>';
+    }
+  }
+
+  /* =========================================================
+     INPUT
+  ========================================================= */
+  const keyMap = {
+    ArrowUp:'up', KeyW:'up',
+    ArrowDown:'down', KeyS:'down',
+    ArrowLeft:'left', KeyA:'left',
+    ArrowRight:'right', KeyD:'right'
+  };
+  window.addEventListener('keydown', (e)=>{
+    const d = keyMap[e.code];
+    if (d && state.player){ state.player.desired = d; e.preventDefault(); }
+  }, {passive:false});
+
+  document.querySelectorAll('#dpad button[data-dir]').forEach(btn=>{
+    const setDir = (ev)=>{ if (state.player) state.player.desired = btn.dataset.dir; ev.preventDefault(); };
+    btn.addEventListener('touchstart', setDir, {passive:false});
+    btn.addEventListener('mousedown', setDir);
+  });
+
+  // swipe controls directly on canvas
+  let touchStart = null;
+  canvas.addEventListener('touchstart', (e)=>{
+    const t = e.touches[0];
+    touchStart = {x:t.clientX, y:t.clientY};
+  }, {passive:true});
+  canvas.addEventListener('touchmove', (e)=>{
+    if (!touchStart || !state.player) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStart.x, dy = t.clientY - touchStart.y;
+    if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+    if (Math.abs(dx) > Math.abs(dy)){
+      state.player.desired = dx > 0 ? 'right' : 'left';
+    } else {
+      state.player.desired = dy > 0 ? 'down' : 'up';
+    }
+    touchStart = {x:t.clientX, y:t.clientY};
+    e.preventDefault();
+  }, {passive:false});
+
+  /* =========================================================
+     AI — personality-driven target selection
+  ========================================================= */
+  function dist2(ax,ay,bx,by){ const dx=ax-bx, dy=ay-by; return dx*dx+dy*dy; }
+
+  function minotaurRequestDir(m){
+    const p = state.player;
+    let targetX, targetY, forbid = OPPOSITE[m.dir];
+
+    if (m.dead){
+      targetX = 9; targetY = 9;
+    } else if (m.frightened){
+      // flee: choose direction that maximizes distance from player among legal options
+      const opts = ['up','down','left','right'].filter(d => d!==forbid && canMove(m.cx,m.cy,d));
+      const usable = opts.length ? opts : ['up','down','left','right'].filter(d=>canMove(m.cx,m.cy,d));
+      let best = 'none', bestScore = -Infinity;
+      for (const d of usable){
+        const dd = DIRS[d];
+        let nx = m.cx+dd.dx, ny=m.cy+dd.dy;
+        if (ny===TUNNEL_ROW) nx = wrapX(nx);
+        const sc = dist2(nx,ny,p.cx,p.cy) + Math.random()*3;
+        if (sc > bestScore){ bestScore = sc; best = d; }
+      }
+      return best;
+    } else {
+      switch(m.personality.id){
+        case 'chase':
+          targetX = p.cx; targetY = p.cy;
+          break;
+        case 'ambush': {
+          const d = DIRS[p.dir] || DIRS.none;
+          targetX = p.cx + d.dx*4;
+          targetY = p.cy + d.dy*4;
+          break;
+        }
+        case 'patrol': {
+          const dd = dist2(m.cx,m.cy,p.cx,p.cy);
+          if (dd > 36){ targetX = p.cx; targetY = p.cy; }
+          else { targetX = m.scatterTarget.x; targetY = m.scatterTarget.y; }
+          break;
+        }
+        case 'erratic': {
+          if (Math.random() < 0.35){ targetX = p.cx; targetY = p.cy; }
+          else { targetX = m.scatterTarget.x; targetY = m.scatterTarget.y; }
+          break;
+        }
+      }
+    }
+    const step = bfsNextStep(m.cx, m.cy, targetX, targetY, forbid);
+    if (step === 'none'){
+      const opts = ['up','down','left','right'].filter(d=>d!==forbid && canMove(m.cx,m.cy,d));
+      if (opts.length) return opts[Math.floor(Math.random()*opts.length)];
+      return canMove(m.cx,m.cy,forbid) ? forbid : 'none';
+    }
+    return step;
+  }
+
+  function playerRequestDir(p){
+    return p.desired;
+  }
+
+  /* =========================================================
+     GAME LOOP
+  ========================================================= */
+  function eatAt(cx, cy){
+    const k = keyOf(cx,cy);
+    if (!pellets.has(k)) return;
+    const kind = pellets.get(k);
+    pellets.delete(k);
+    if (kind === 'p'){
+      state.score += 10;
+    } else {
+      state.score += 50;
+      triggerFright();
+    }
+    updateHud();
+    if (pellets.size === 0){ onWin(); }
+  }
+
+  function triggerFright(){
+    state.frightTimer = state.frightDuration;
+    state.comboCount = 0;
+    state.minotaurs.forEach(m=>{ if(!m.dead){ m.frightened = true; m.dir = OPPOSITE[m.dir]; } });
+  }
+
+  function onCaughtMinotaur(m){
+    m.dead = true;
+    m.frightened = false;
+    state.comboCount++;
+    state.score += 100 * Math.pow(2, Math.min(state.comboCount,4));
+    updateHud();
+  }
+
+  function onPlayerCaught(){
+    state.lives--;
+    updateHud();
+    if (state.lives <= 0){
+      onLose();
+    } else {
+      setupLevel();
+    }
+  }
+
+  function onLose(){
+    state.running = false;
+    document.getElementById('loseScore').textContent = 'You gathered ' + state.score + ' lengths of thread.';
+    document.getElementById('loseOverlay').classList.add('show');
+  }
+  function onWin(){
+    state.running = false;
+    document.getElementById('winScore').textContent = 'The labyrinth is cleared. Score: ' + state.score;
+    document.getElementById('winOverlay').classList.add('show');
+  }
+
+  function tick(ts){
+    if (!state.lastTime) state.lastTime = ts;
+    let dt = (ts - state.lastTime) / 1000;
+    state.lastTime = ts;
+    dt = Math.min(dt, 0.05);
+
+    if (state.running){
+      if (state.invuln > 0) state.invuln -= dt;
+
+      advance(state.player, dt, playerRequestDir);
+      eatAt(state.player.cx, state.player.cy);
+
+      if (state.frightTimer > 0){
+        state.frightTimer -= dt;
+        if (state.frightTimer <= 0){
+          state.frightTimer = 0;
+          state.minotaurs.forEach(m => { if(!m.dead) m.frightened = false; });
+        }
+      }
+
+      state.minotaurs.forEach(m=>{
+        const spd = m.dead ? m.speed*2.2 : (m.frightened ? m.speed*0.55 : m.speed);
+        const savedSpeed = m.speed;
+        m.speed = spd;
+        advance(m, dt, minotaurRequestDir);
+        m.speed = savedSpeed;
+        if (m.dir !== 'none') m.eyeDir = m.dir;
+
+        if (m.dead && m.cx===9 && m.cy===9){
+          m.dead = false;
+          m.frightened = false;
+        }
+
+        if (state.invuln <= 0 && !m.dead){
+          const dx = m.sx - state.player.sx, dy = m.sy - state.player.sy;
+          if (dx*dx + dy*dy < 0.35){
+            if (m.frightened){ onCaughtMinotaur(m); }
+            else { onPlayerCaught(); }
+          }
+        }
+      });
+    }
+
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+  function draw(){
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+
+    // walls — clay blocks with a subtle inset line (meander feel)
+    for (let y=0;y<ROWS;y++){
+      for (let x=0;x<COLS;x++){
+        if (MAZE_ROWS[y][x] === '#'){
+          const px = x*TILE, py = y*TILE;
+          ctx.fillStyle = '#241a10';
+          ctx.fillRect(px, py, TILE, TILE);
+          ctx.strokeStyle = 'rgba(181,84,31,0.35)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(px+0.5, py+0.5, TILE-1, TILE-1);
+        }
+      }
+    }
+    // outer border glow
+    ctx.strokeStyle = 'rgba(212,160,23,0.5)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1,1,canvas.width-2, canvas.height-2);
+
+    // lair box marker
+    ctx.strokeStyle = 'rgba(212,160,23,0.25)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(PEN.x0*TILE+2, PEN.y0*TILE+2, (PEN.x1-PEN.x0+1)*TILE-4, (PEN.y1-PEN.y0+1)*TILE-4);
+
+    // pellets
+    pellets.forEach((kind, k)=>{
+      const [x,y] = k.split(',').map(Number);
+      const cx = x*TILE + TILE/2, cy = y*TILE + TILE/2;
+      if (kind === 'p'){
+        ctx.fillStyle = '#d4a017';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 2.4, 0, Math.PI*2);
+        ctx.fill();
+      } else {
+        const pulse = 3.6 + Math.sin(performance.now()/180)*1.4;
+        ctx.fillStyle = '#f0c95e';
+        ctx.beginPath();
+        ctx.arc(cx, cy, pulse, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(240,201,94,0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, pulse+3, 0, Math.PI*2);
+        ctx.stroke();
+      }
+    });
+
+    if (state.player) drawTheseus(state.player);
+    state.minotaurs.forEach(drawMinotaur);
+  }
+
+  const DIR_ANGLE = { right:0, down:Math.PI/2, left:Math.PI, up:-Math.PI/2 };
+
+  function drawTheseus(p){
+    const cx = p.sx*TILE + TILE/2, cy = p.sy*TILE + TILE/2;
+    const r = TILE*0.46;
+
+    if (p.dir !== 'none') p.angle = DIR_ANGLE[p.dir];
+    if (p.angle === undefined) p.angle = 0;
+
+    p.mouth = (p.mouth + 0.18) % (Math.PI*2);
+    const gleam = (Math.sin(p.mouth) + 1) / 2; // 0..1
+
+    const flicker = state.invuln > 0 ? (Math.floor(performance.now()/100)%2===0) : true;
+    if (!flicker) return;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(p.angle);
+    ctx.shadowColor = 'rgba(212,160,23,0.5)';
+    ctx.shadowBlur = 5;
+
+    const guardX = -r*0.15;
+    const bladeBaseX = -r*0.02;
+    const bladeTipX = r*1.05;
+    const halfW = r*0.15;
+
+    // blade
+    ctx.fillStyle = '#e9dcc4';
+    ctx.beginPath();
+    ctx.moveTo(bladeBaseX, -halfW);
+    ctx.lineTo(bladeTipX, 0);
+    ctx.lineTo(bladeBaseX, halfW);
+    ctx.closePath();
+    ctx.fill();
+
+    // fuller (centre ridge line) + a sliding gleam highlight
+    ctx.strokeStyle = 'rgba(120,105,80,0.45)';
+    ctx.lineWidth = Math.max(1, r*0.03);
+    ctx.beginPath();
+    ctx.moveTo(bladeBaseX, 0);
+    ctx.lineTo(bladeTipX*0.9, 0);
+    ctx.stroke();
+
+    ctx.strokeStyle = `rgba(255,250,225,${0.35 + gleam*0.5})`;
+    ctx.lineWidth = Math.max(1, r*0.05);
+    const gx = bladeBaseX + (bladeTipX - bladeBaseX) * gleam;
+    ctx.beginPath();
+    ctx.moveTo(gx, -halfW*0.6);
+    ctx.lineTo(gx + r*0.1, halfW*0.6);
+    ctx.stroke();
+
+    // crossguard
+    ctx.fillStyle = '#d4a017';
+    ctx.fillRect(guardX - r*0.045, -r*0.32, r*0.09, r*0.64);
+
+    // grip
+    ctx.fillStyle = '#4a2f14';
+    ctx.fillRect(guardX - r*0.045 - r*0.34, -r*0.1, r*0.34, r*0.2);
+
+    // pommel
+    ctx.fillStyle = '#d4a017';
+    ctx.beginPath();
+    ctx.arc(guardX - r*0.045 - r*0.34 - r*0.08, 0, r*0.11, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawMinotaur(m){
+    const cx = m.sx*TILE + TILE/2, cy = m.sy*TILE + TILE/2;
+    const r = TILE*0.36;
+
+    if (m.dead){
+      // eyes only, hurrying home
+      drawEyes(cx, cy, m.eyeDir, '#ffffff');
+      return;
+    }
+
+    let bodyColor = m.personality.color;
+    let horns = '#e9dcc4';
+    if (m.frightened){
+      const flashing = state.frightTimer < 2 && Math.floor(performance.now()/150)%2===0;
+      bodyColor = flashing ? '#c9d6d8' : '#3a4a4c';
+      horns = flashing ? '#8c2a1c' : '#c9d6d8';
+    }
+
+    ctx.save();
+    ctx.fillStyle = bodyColor;
+    ctx.shadowColor = m.frightened ? 'rgba(90,150,160,0.5)' : m.personality.glow;
+    ctx.shadowBlur = 6;
+
+    // body: dome top + skirt with wavy bottom (classic ghost silhouette,
+    // reframed with small horns to read as a minotaur)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, Math.PI, 0);
+    ctx.lineTo(cx+r, cy+r*0.7);
+    const waves = 4;
+    for (let i=0;i<waves;i++){
+      const wx = cx + r - (2*r/waves)*(i+0.5);
+      const wy = cy + (i%2===0 ? r : r*0.55);
+      ctx.lineTo(wx, wy);
+    }
+    ctx.lineTo(cx-r, cy+r*0.7);
+    ctx.closePath();
+    ctx.fill();
+
+    if (!m.frightened){
+      // horns
+      ctx.fillStyle = horns;
+      ctx.beginPath();
+      ctx.moveTo(cx-r*0.55, cy-r*0.7);
+      ctx.lineTo(cx-r*0.95, cy-r*1.35);
+      ctx.lineTo(cx-r*0.25, cy-r*0.85);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx+r*0.55, cy-r*0.7);
+      ctx.lineTo(cx+r*0.95, cy-r*1.35);
+      ctx.lineTo(cx+r*0.25, cy-r*0.85);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+
+    drawEyes(cx, cy, m.eyeDir, m.frightened ? '#0b0806' : '#e9dcc4');
+  }
+
+  function drawEyes(cx, cy, dir, color){
+    const off = TILE*0.11;
+    let ex1=-off, ey1=-off*0.3, ex2=off, ey2=-off*0.3;
+    const look = DIRS[dir] || DIRS.down;
+    ctx.fillStyle = '#0b0806';
+    ctx.beginPath(); ctx.arc(cx+ex1, cy+ey1, 3.4, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx+ex2, cy+ey2, 3.4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(cx+ex1+look.dx*1.4, cy+ey1+look.dy*1.4, 1.6, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx+ex2+look.dx*1.4, cy+ey2+look.dy*1.4, 1.6, 0, Math.PI*2); ctx.fill();
+  }
+
+  /* =========================================================
+     UI WIRING
+  ========================================================= */
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    document.getElementById('startOverlay').classList.remove('show');
+    newGame();
+    state.running = true;
+  });
+  document.getElementById('retryBtn').addEventListener('click', ()=>{
+    document.getElementById('loseOverlay').classList.remove('show');
+    newGame();
+    state.running = true;
+  });
+  document.getElementById('nextBtn').addEventListener('click', ()=>{
+    document.getElementById('winOverlay').classList.remove('show');
+    state.level++;
+    resetPellets();
+    setupLevel();
+    updateHud();
+    state.running = true;
+  });
+
+  resizeCanvas();
+  resetPellets();
+  updateHud();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
