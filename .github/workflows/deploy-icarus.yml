@@ -19,8 +19,8 @@ jobs:
       - name: Build
         run: |
           mkdir -p _site
-          cp "theseus-labyrinth/flappy-icarus.html" _site/flappy-icarus.html
-          cp "theseus-labyrinth/flappy-icarus-screenshot.png" _site/flappy-icarus-screenshot.png
+          cp "flappy-icarus/flappy-icarus.html" _site/flappy-icarus.html
+          cp "flappy-icarus/flappy-icarus-screenshot.png" _site/flappy-icarus-screenshot.png
 
       - name: Deploy to gh-pages root
         uses: peaceiris/actions-gh-pages@v4
