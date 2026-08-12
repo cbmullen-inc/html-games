@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'theseus-labyrinth/flappy-icarus.html'
+      - 'flappy-icarus/flappy-icarus.html'
   workflow_dispatch:
 
 permissions:
