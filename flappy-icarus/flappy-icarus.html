@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Icarus and the Sun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700;900&family=EB+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0b0806;
+    --void-2:#161009;
+    --clay:#b5541f;
+    --clay-dark:#6e3212;
+    --clay-line:#8a3f16;
+    --gold:#d4a017;
+    --gold-bright:#f0c95e;
+    --parchment:#e9dcc4;
+    --parchment-dim:#a99a80;
+    --sea:#1c2340;
+    --sea-light:#2c3a63;
+    --danger:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:
+      radial-gradient(ellipse at top, #1a120b 0%, var(--void) 55%),
+      var(--void);
+    color:var(--parchment);
+    font-family:'EB Garamond', serif;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior:none;
+  }
+  body{
+    display:flex; flex-direction:column; align-items:center;
+    min-height:100%;
+    padding:22px 14px 30px;
+    gap:14px;
+  }
+  .eyebrow{
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    font-size:13px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    margin:0;
+  }
+  h1{
+    font-family:'Cinzel Decorative', serif;
+    font-weight:900;
+    font-size:clamp(26px, 6vw, 40px);
+    letter-spacing:.06em;
+    color:var(--gold-bright);
+    margin:2px 0 0 0;
+    text-shadow: 0 0 18px rgba(212,160,23,0.35), 0 2px 0 rgba(0,0,0,0.6);
+  }
+  .meander{
+    width:min(420px, 92vw);
+    height:14px;
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--clay) 0 6px, transparent 6px 8px
+    );
+    opacity:.55;
+    mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+  }
+
+  .hud{
+    width:min(420px, 92vw);
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'Cinzel', serif;
+    font-size:13px;
+    letter-spacing:.05em;
+  }
+  .hud .block{ display:flex; align-items:center; gap:8px; }
+  .hud .label{ color:var(--parchment-dim); font-size:11px; text-transform:uppercase; letter-spacing:.12em;}
+  .hud .value{ color:var(--gold-bright); font-size:16px; min-width:2ch; display:inline-block; text-align:right;}
+
+  .settings{
+    width:min(420px, 92vw);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    font-family:'Cinzel', serif;
+  }
+  .settings .group{ display:flex; align-items:center; gap:8px; }
+  .settings .label{ font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--parchment-dim); }
+  .diff-btns{ display:flex; gap:4px; }
+  .diff-btns button{
+    font-family:'Cinzel', serif;
+    font-size:11px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    background:transparent;
+    color:var(--parchment-dim);
+    border:1px solid var(--clay-line);
+    padding:5px 10px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  .diff-btns button.active{
+    background:linear-gradient(var(--clay), var(--clay-dark));
+    color:var(--parchment);
+    border-color:var(--gold);
+  }
+  .pace-slider{ display:flex; align-items:center; gap:8px; }
+  .pace-slider input[type=range]{ width:100px; accent-color:var(--gold); }
+  .pace-slider .value{ font-size:12px; color:var(--gold-bright); min-width:3.4ch; }
+
+  .frame-wrap{
+    position:relative;
+    width:min(420px, 94vw);
+    aspect-ratio:420/640;
+    padding:10px;
+    background:
+      linear-gradient(var(--void-2), var(--void-2)) padding-box,
+      repeating-linear-gradient(45deg, var(--clay) 0 4px, var(--clay-dark) 4px 8px) border-box;
+    border:7px solid transparent;
+    border-radius:4px;
+    box-shadow: 0 0 0 1px rgba(212,160,23,0.25), 0 18px 50px rgba(0,0,0,0.6), inset 0 0 40px rgba(0,0,0,0.5);
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+    background:var(--void);
+    border-radius:2px;
+    touch-action:none;
+    cursor:pointer;
+  }
+
+  .overlay{
+    position:absolute; inset:10px;
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    background:rgba(6,4,2,0.88);
+    border-radius:2px;
+    padding:20px;
+    gap:14px;
+  }
+  .overlay.show{ display:flex; }
+  .overlay h2{
+    font-family:'Cinzel Decorative', serif;
+    font-size:clamp(20px,5vw,28px);
+    color:var(--gold-bright);
+    margin:0;
+    letter-spacing:.04em;
+  }
+  .overlay p{
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    color:var(--parchment-dim);
+    max-width:32ch;
+    margin:0;
+    line-height:1.5;
+    font-size:15px;
+  }
+  .btn{
+    font-family:'Cinzel', serif;
+    font-size:13px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    background:linear-gradient(var(--clay), var(--clay-dark));
+    color:var(--parchment);
+    border:1px solid var(--gold);
+    padding:11px 26px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{ transform:translateY(-1px); box-shadow:0 4px 14px rgba(212,160,23,0.3); }
+  .btn:active{ transform:translateY(0px); }
+
+  .hint{
+    font-size:12px;
+    color:var(--parchment-dim);
+    font-style:italic;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+  <p class="eyebrow">A Homage to Flight and Folly</p>
+  <h1>Icarus and the Sun</h1>
+  <div class="meander"></div>
+
+  <div class="hud">
+    <div class="block">
+      <span class="label">Columns Passed</span>
+      <span class="value" id="score">0</span>
+    </div>
+    <div class="block">
+      <span class="label">Best</span>
+      <span class="value" id="best">0</span>
+    </div>
+  </div>
+
+  <div class="settings">
+    <div class="group">
+      <span class="label">Trial</span>
+      <div class="diff-btns" id="diffBtns">
+        <button data-diff="easy">Wanderer</button>
+        <button data-diff="normal" class="active">Hero</button>
+        <button data-diff="hard">Champion</button>
+      </div>
+    </div>
+    <div class="group pace-slider">
+      <span class="label">Pace</span>
+      <input type="range" id="paceSlider" min="0.6" max="1.4" step="0.05" value="1.0">
+      <span class="value" id="paceValue">1.00x</span>
+    </div>
+  </div>
+
+  <div class="frame-wrap">
+    <canvas id="game"></canvas>
+    <div class="overlay show" id="startOverlay">
+      <h2>The Wax Will Not Last</h2>
+      <p>Fly between the columns of the old temples. Stray too near the sun and your wings begin to melt. Fall too low and the sea will take you.</p>
+      <button class="btn" id="startBtn">Take Flight</button>
+      <p class="hint">Tap, click, or press Space to flap</p>
+    </div>
+    <div class="overlay" id="deathOverlay">
+      <h2 id="deathTitle">You Have Fallen</h2>
+      <p id="deathScore"></p>
+      <button class="btn" id="retryBtn">Fly Again</button>
+    </div>
+  </div>
+
+  <p class="hint">Tap / click the sky, or press Space, to flap</p>
+
+<script>
+(function(){
+  "use strict";
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 420;
+  canvas.height = 640;
+  const W = canvas.width, H = canvas.height;
+
+  const SUN_ZONE_Y = 130;      // above this y, proximity to the sun begins to matter
+  const SEA_TOP_Y = H - 90;    // touching this line means the sea has claimed you
+  const ICARUS_R = 15;
+  const ICARUS_X = W * 0.28;
+  const BASE_GRAVITY = 1500;
+  const BASE_FLAP_V = -430;
+  const BASE_SCROLL = 175;
+  const COL_WIDTH = 46;
+
+  const DIFFICULTY = {
+    easy:   { gap:210, scrollFactor:0.85, meltRate:0.55, spacing:300, label:'Wanderer' },
+    normal: { gap:175, scrollFactor:1.0,  meltRate:0.85, spacing:250, label:'Hero' },
+    hard:   { gap:145, scrollFactor:1.2,  meltRate:1.2,  spacing:210, label:'Champion' }
+  };
+
+  const state = {
+    difficulty:'normal',
+    speedMult:1.0,
+    gameState:'ready', // ready | playing | dead
+    score:0,
+    best:0,
+    meltMeter:0,
+    lastTime:0
+  };
+
+  let icarus, obstacles;
+
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function resetGame(){
+    icarus = { x:ICARUS_X, y:H*0.42, vy:0, wingFlap:0, angle:0 };
+    obstacles = [];
+    state.score = 0;
+    state.meltMeter = 0;
+    state.gameState = 'ready';
+    updateHud();
+  }
+
+  function updateHud(){
+    document.getElementById('score').textContent = state.score;
+    document.getElementById('best').textContent = state.best;
+  }
+
+  function flap(){
+    if (state.gameState === 'ready'){
+      state.gameState = 'playing';
+      document.getElementById('startOverlay').classList.remove('show');
+    }
+    if (state.gameState !== 'playing') return;
+    icarus.vy = BASE_FLAP_V;
+    icarus.wingFlap = 1;
+  }
+
+  function die(reason){
+    if (state.gameState !== 'playing') return;
+    state.gameState = 'dead';
+    state.best = Math.max(state.best, state.score);
+    updateHud();
+    const titles = {
+      melt: 'The Wax Has Melted',
+      sea: 'The Sea Has Claimed You',
+      column: 'Struck Down Mid-Flight'
+    };
+    const lines = {
+      melt: 'You flew too close to the sun, just as Daedalus feared.',
+      sea: 'You flew too low, and the sea closed over your wings.',
+      column: 'The old stones of the temple do not yield.'
+    };
+    document.getElementById('deathTitle').textContent = titles[reason] || 'You Have Fallen';
+    document.getElementById('deathScore').textContent =
+      lines[reason] + ' Columns passed: ' + state.score + (state.score === state.best && state.score>0 ? ' — a new best!' : '');
+    document.getElementById('deathOverlay').classList.add('show');
+  }
+
+  function circleRectCollide(cx, cy, r, rx, ry, rw, rh){
+    const nx = clamp(cx, rx, rx+rw);
+    const ny = clamp(cy, ry, ry+rh);
+    const dx = cx-nx, dy = cy-ny;
+    return (dx*dx+dy*dy) < r*r;
+  }
+
+  function spawnObstacle(diff){
+    // gapY is chosen across nearly the full vertical range, so some
+    // gaps sit high enough that passing through means risking the sun
+    const minGapY = diff.gap/2 + 24;
+    const maxGapY = SEA_TOP_Y - diff.gap/2 - 20;
+    const gapY = minGapY + Math.random() * Math.max(10, maxGapY - minGapY);
+    obstacles.push({
+      x: W + 20,
+      width: COL_WIDTH,
+      gap: diff.gap,
+      gapY,
+      passed: false,
+      statue: Math.random() < 0.32
+    });
+  }
+
+  function update(dt){
+    if (state.gameState !== 'playing') return;
+    const diff = DIFFICULTY[state.difficulty];
+
+    icarus.vy += BASE_GRAVITY * dt;
+    icarus.y += icarus.vy * dt;
+    icarus.wingFlap = Math.max(0, icarus.wingFlap - dt*2.4);
+    icarus.angle = clamp(icarus.vy/650, -0.6, 1.25);
+
+    // --- sun proximity: melts the wax the longer / closer you linger ---
+    if (icarus.y < SUN_ZONE_Y){
+      const proximity = 1 - Math.max(0, icarus.y) / SUN_ZONE_Y; // 0..1
+      state.meltMeter += diff.meltRate * proximity * 42 * dt;
+    } else {
+      state.meltMeter -= 32 * dt;
+    }
+    state.meltMeter = clamp(state.meltMeter, 0, 100);
+    if (state.meltMeter >= 100){ die('melt'); return; }
+
+    if (icarus.y - ICARUS_R < 4){
+      icarus.y = ICARUS_R + 4;
+      icarus.vy = Math.max(icarus.vy, 0);
+    }
+
+    if (icarus.y + ICARUS_R > SEA_TOP_Y){ die('sea'); return; }
+
+    // --- obstacles ---
+    const scrollSpeed = BASE_SCROLL * diff.scrollFactor * state.speedMult;
+    obstacles.forEach(o => { o.x -= scrollSpeed * dt; });
+    obstacles = obstacles.filter(o => o.x + o.width > -10);
+
+    const last = obstacles[obstacles.length-1];
+    if (!last || last.x <= W - diff.spacing){
+      spawnObstacle(diff);
+    }
+
+    for (const o of obstacles){
+      if (!o.passed && o.x + o.width < icarus.x){
+        o.passed = true;
+        state.score++;
+        updateHud();
+      }
+      const topH = o.gapY - o.gap/2;
+      const bottomY = o.gapY + o.gap/2;
+      if (circleRectCollide(icarus.x, icarus.y, ICARUS_R, o.x, 0, o.width, topH)){ die('column'); return; }
+      if (circleRectCollide(icarus.x, icarus.y, ICARUS_R, o.x, bottomY, o.width, SEA_TOP_Y - bottomY)){ die('column'); return; }
+    }
+  }
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+  function draw(){
+    // sky
+    const sky = ctx.createLinearGradient(0,0,0,SEA_TOP_Y);
+    sky.addColorStop(0, '#241708');
+    sky.addColorStop(0.35, '#170f08');
+    sky.addColorStop(1, '#0b0806');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0,0,W,SEA_TOP_Y);
+
+    drawSun();
+
+    obstacles.forEach(drawColumn);
+
+    drawSea();
+
+    if (icarus) drawIcarus();
+  }
+
+  function drawSun(){
+    const sx = W*0.5, sy = 20, r = 46;
+    const dangerT = state.meltMeter/100;
+
+    ctx.save();
+    const glowR = r + 30 + dangerT*20;
+    const glow = ctx.createRadialGradient(sx,sy,r*0.3, sx,sy, glowR);
+    glow.addColorStop(0, `rgba(240,201,94,${0.55+dangerT*0.25})`);
+    glow.addColorStop(1, 'rgba(240,201,94,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(sx,sy,glowR,0,Math.PI*2); ctx.fill();
+
+    // rays
+    ctx.strokeStyle = `rgba(240,201,94,${0.3+dangerT*0.3})`;
+    ctx.lineWidth = 2;
+    const rayCount = 12;
+    for (let i=0;i<rayCount;i++){
+      const a = (i/rayCount)*Math.PI*2 + performance.now()/6000;
+      ctx.beginPath();
+      ctx.moveTo(sx+Math.cos(a)*(r+4), sy+Math.sin(a)*(r+4));
+      ctx.lineTo(sx+Math.cos(a)*(r+16), sy+Math.sin(a)*(r+16));
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = dangerT > 0.6 ? '#e8b23a' : '#f0c95e';
+    ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2); ctx.fill();
+
+    // melt-meter arc: fills red around the sun's rim as danger rises
+    if (dangerT > 0.02){
+      ctx.strokeStyle = state.meltMeter > 75 ? '#ff5a3c' : '#c0392b';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(sx, sy, r+9, -Math.PI/2, -Math.PI/2 + Math.PI*2*dangerT);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // horizon haze marking where the danger zone begins
+    const haze = ctx.createLinearGradient(0,0,0,SUN_ZONE_Y);
+    haze.addColorStop(0, 'rgba(240,201,94,0.06)');
+    haze.addColorStop(1, 'rgba(240,201,94,0)');
+    ctx.fillStyle = haze;
+    ctx.fillRect(0,0,W,SUN_ZONE_Y);
+  }
+
+  function drawColumn(o){
+    const topH = o.gapY - o.gap/2;
+    const bottomY = o.gapY + o.gap/2;
+    const bottomH = SEA_TOP_Y - bottomY;
+
+    ctx.fillStyle = '#b5541f';
+    ctx.fillRect(o.x, 0, o.width, topH);
+    ctx.fillRect(o.x, bottomY, o.width, bottomH);
+
+    // fluting (vertical grooves)
+    ctx.strokeStyle = 'rgba(80,35,10,0.4)';
+    ctx.lineWidth = 1.5;
+    const grooves = 4;
+    for (let i=1;i<grooves;i++){
+      const gx = o.x + (o.width/grooves)*i;
+      ctx.beginPath(); ctx.moveTo(gx, 2); ctx.lineTo(gx, topH-2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(gx, bottomY+2); ctx.lineTo(gx, SEA_TOP_Y-2); ctx.stroke();
+    }
+
+    // capitals at the gap-facing ends
+    ctx.fillStyle = '#8a3f16';
+    ctx.fillRect(o.x-4, topH-10, o.width+8, 10);
+    ctx.fillRect(o.x-4, bottomY, o.width+8, 10);
+
+    // occasional statue perched at the base of the lower column
+    if (o.statue){
+      const bx = o.x + o.width/2, by = topH - 10;
+      ctx.fillStyle = '#9c5a2a';
+      ctx.beginPath(); ctx.arc(bx, by-14, 6, 0, Math.PI*2); ctx.fill();      // head
+      ctx.fillRect(bx-8, by-10, 16, 12);                                     // shoulders/robe
+      ctx.beginPath();                                                       // one raised arm
+      ctx.moveTo(bx+7, by-9); ctx.lineTo(bx+15, by-18); ctx.lineTo(bx+11, by-19); ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function drawSea(){
+    const seaH = H - SEA_TOP_Y;
+    const grad = ctx.createLinearGradient(0, SEA_TOP_Y, 0, H);
+    grad.addColorStop(0, '#2c3a63');
+    grad.addColorStop(1, '#141a30');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, SEA_TOP_Y, W, seaH);
+
+    ctx.strokeStyle = 'rgba(233,220,196,0.35)';
+    ctx.lineWidth = 2;
+    const t = performance.now()/700;
+    for (let row=0; row<3; row++){
+      const y = SEA_TOP_Y + 10 + row*16;
+      ctx.beginPath();
+      for (let x=0; x<=W; x+=14){
+        const wy = y + Math.sin(x*0.05 + t + row) * 3;
+        if (x===0) ctx.moveTo(x, wy); else ctx.lineTo(x, wy);
+      }
+      ctx.stroke();
+    }
+  }
+
+  function drawIcarus(){
+    ctx.save();
+    ctx.translate(icarus.x, icarus.y);
+    ctx.rotate(icarus.angle);
+
+    const wingLift = icarus.wingFlap; // 1 = fully raised, decays to 0
+    const wingAngle = -0.9 + wingLift*1.5; // wings sweep up on flap, settle down after
+
+    const meltT = state.meltMeter/100;
+    const wingColor = meltT > 0.15
+      ? `rgb(${Math.round(212+meltT*30)},${Math.round(160-meltT*60)},${Math.round(23-meltT*20)})`
+      : '#d4a017';
+
+    // trailing wing (drawn first, sits behind body)
+    ctx.save();
+    ctx.rotate(-wingAngle*0.8);
+    ctx.fillStyle = wingColor;
+    ctx.beginPath();
+    ctx.moveTo(-2,-2);
+    ctx.quadraticCurveTo(-26, -6, -30, 6);
+    ctx.quadraticCurveTo(-14, 10, -2, 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // body
+    ctx.fillStyle = '#d9a066';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ICARUS_R*0.85, ICARUS_R, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // leading wing (drawn on top, in front of body)
+    ctx.save();
+    ctx.rotate(wingAngle);
+    ctx.fillStyle = wingColor;
+    ctx.beginPath();
+    ctx.moveTo(2,-2);
+    ctx.quadraticCurveTo(28, -10, 34, 2);
+    ctx.quadraticCurveTo(16, 8, 2, 4);
+    ctx.closePath();
+    ctx.fill();
+    if (meltT > 0.4){
+      // a thin dripping streak once things start to melt
+      ctx.strokeStyle = `rgba(240,201,94,${meltT*0.7})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(20, 4);
+      ctx.lineTo(20, 4 + meltT*10 + Math.sin(performance.now()/150)*2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // head
+    ctx.fillStyle = '#d9a066';
+    ctx.beginPath();
+    ctx.arc(ICARUS_R*0.55, -ICARUS_R*0.5, ICARUS_R*0.55, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  /* =========================================================
+     LOOP
+  ========================================================= */
+  function tick(ts){
+    if (!state.lastTime) state.lastTime = ts;
+    let dt = (ts - state.lastTime)/1000;
+    state.lastTime = ts;
+    dt = Math.min(dt, 0.035);
+
+    update(dt);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  /* =========================================================
+     INPUT
+  ========================================================= */
+  window.addEventListener('keydown', (e)=>{
+    if (e.code === 'Space' || e.code === 'ArrowUp'){
+      flap();
+      e.preventDefault();
+    }
+  }, {passive:false});
+
+  canvas.addEventListener('pointerdown', (e)=>{ flap(); e.preventDefault(); }, {passive:false});
+
+  document.getElementById('startBtn').addEventListener('click', ()=>{ flap(); });
+  document.getElementById('retryBtn').addEventListener('click', ()=>{
+    document.getElementById('deathOverlay').classList.remove('show');
+    resetGame();
+    document.getElementById('startOverlay').classList.add('show');
+  });
+
+  document.querySelectorAll('#diffBtns button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#diffBtns button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.difficulty = btn.dataset.diff;
+    });
+  });
+
+  const paceSlider = document.getElementById('paceSlider');
+  const paceValue = document.getElementById('paceValue');
+  paceSlider.addEventListener('input', ()=>{
+    state.speedMult = parseFloat(paceSlider.value);
+    paceValue.textContent = state.speedMult.toFixed(2) + 'x';
+  });
+
+  resetGame();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

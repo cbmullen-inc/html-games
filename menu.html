@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Myths at Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700;900&family=EB+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0b0806;
+    --void-2:#161009;
+    --clay:#b5541f;
+    --clay-dark:#6e3212;
+    --clay-line:#8a3f16;
+    --gold:#d4a017;
+    --gold-bright:#f0c95e;
+    --parchment:#e9dcc4;
+    --parchment-dim:#a99a80;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; min-height:100%;
+    background:
+      radial-gradient(ellipse at top, #1a120b 0%, var(--void) 55%),
+      var(--void);
+    color:var(--parchment);
+    font-family:'EB Garamond', serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body{
+    display:flex; flex-direction:column; align-items:center;
+    padding:32px 16px 48px;
+    gap:18px;
+  }
+
+  .eyebrow{
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    font-size:14px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    margin:0;
+    text-align:center;
+  }
+  h1{
+    font-family:'Cinzel Decorative', serif;
+    font-weight:900;
+    font-size:clamp(32px, 7vw, 50px);
+    letter-spacing:.05em;
+    color:var(--gold-bright);
+    margin:2px 0 0 0;
+    text-align:center;
+    text-shadow: 0 0 22px rgba(212,160,23,0.35), 0 2px 0 rgba(0,0,0,0.6);
+  }
+  .meander{
+    width:min(640px, 92vw);
+    height:14px;
+    background-image: repeating-linear-gradient(
+      to right,
+      var(--clay) 0 6px, transparent 6px 8px
+    );
+    opacity:.55;
+    mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+    margin-bottom:8px;
+  }
+
+  .grid{
+    width:min(980px, 96vw);
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap:28px;
+  }
+
+  .card{
+    display:flex;
+    flex-direction:column;
+    background:var(--void-2);
+    border-radius:6px;
+    overflow:hidden;
+    border:1px solid rgba(212,160,23,0.2);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.55);
+    text-decoration:none;
+    color:inherit;
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .card:hover, .card:focus-visible{
+    transform:translateY(-4px);
+    box-shadow: 0 24px 54px rgba(0,0,0,0.65), 0 0 0 1px rgba(212,160,23,0.4);
+    border-color:rgba(212,160,23,0.5);
+  }
+
+  .art{
+    position:relative;
+    width:100%;
+    aspect-ratio: 4/3;
+    background:
+      repeating-linear-gradient(45deg, var(--clay) 0 4px, var(--clay-dark) 4px 8px);
+    padding:8px;
+  }
+  .art .inner{
+    position:relative;
+    width:100%; height:100%;
+    border-radius:2px;
+    overflow:hidden;
+    background:var(--void);
+  }
+  .art img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .placeholder{
+    position:absolute; inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(212,160,23,0.12), transparent 60%),
+      var(--void);
+  }
+  .placeholder svg{ width:56px; height:56px; opacity:0.85; }
+  .placeholder span{
+    font-family:'Cinzel', serif;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+  }
+
+  .badge{
+    position:absolute;
+    top:16px; left:16px;
+    font-family:'Cinzel', serif;
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--gold-bright);
+    background:rgba(11,8,6,0.75);
+    border:1px solid rgba(212,160,23,0.4);
+    padding:4px 9px;
+    border-radius:2px;
+  }
+
+  .card-body{
+    padding:18px 20px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    flex:1;
+  }
+  .card-title{
+    font-family:'Cinzel Decorative', serif;
+    font-size:20px;
+    letter-spacing:.03em;
+    color:var(--gold-bright);
+    margin:0;
+  }
+  .card-desc{
+    font-size:14.5px;
+    font-style:italic;
+    color:var(--parchment-dim);
+    line-height:1.5;
+    margin:0;
+    flex:1;
+  }
+  .card-tags{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin:4px 0 2px;
+  }
+  .tag{
+    font-family:'Cinzel', serif;
+    font-size:10px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    border:1px solid var(--clay-line);
+    padding:3px 8px;
+    border-radius:2px;
+  }
+  .play-btn{
+    margin-top:8px;
+    align-self:flex-start;
+    font-family:'Cinzel', serif;
+    font-size:13px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    background:linear-gradient(var(--clay), var(--clay-dark));
+    color:var(--parchment);
+    border:1px solid var(--gold);
+    padding:10px 22px;
+    border-radius:2px;
+  }
+
+  footer{
+    margin-top:12px;
+    font-size:12.5px;
+    font-style:italic;
+    color:var(--parchment-dim);
+    text-align:center;
+    max-width:52ch;
+  }
+
+  @media (max-width: 420px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <p class="eyebrow">A Small Arcade of Ancient Tales</p>
+  <h1>Myths at Play</h1>
+  <div class="meander"></div>
+
+  <div class="grid">
+
+    <a class="card" href="theseus-labyrinth/theseus-labyrinth.html">
+      <div class="art">
+        <div class="inner">
+          <img src="theseus-labyrinth-screenshot.jpg" alt="Theseus and the Labyrinth screenshot"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="placeholder" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#d4a017" stroke-width="1.4">
+              <rect x="3" y="3" width="18" height="18" rx="1"/>
+              <path d="M7 3v6h4v4H7v8"/>
+              <path d="M17 3v4h-4v4h4v4h-4v6"/>
+            </svg>
+          </div>
+        </div>
+        <span class="badge">Maze &middot; Chase</span>
+      </div>
+      <div class="card-body">
+        <h2 class="card-title">Theseus and the Labyrinth</h2>
+        <p class="card-desc">Guide Theseus through a winding, looping labyrinth, gathering Ariadne's thread while four Minotaurs — each with their own hunting instinct — close in from the centre.</p>
+        <div class="card-tags">
+          <span class="tag">Pac-Man homage</span>
+          <span class="tag">Keyboard &amp; touch</span>
+        </div>
+        <span class="play-btn">Enter the Labyrinth</span>
+      </div>
+    </a>
+
+    <a class="card" href="flappy-icarus/flappy-icarus.html">
+      <div class="art">
+        <div class="inner">
+          <img src="flappy-icarus-screenshot.jpg" alt="Icarus and the Sun screenshot"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="placeholder" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#d4a017" stroke-width="1.4">
+              <circle cx="12" cy="12" r="4.5"/>
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/>
+            </svg>
+          </div>
+        </div>
+        <span class="badge">Flight &middot; Reflex</span>
+      </div>
+      <div class="card-body">
+        <h2 class="card-title">Icarus and the Sun</h2>
+        <p class="card-desc">Flap between the fluted columns of the old temples. Fly too high and your wings begin to melt; fall too low and the wine-dark sea will take you.</p>
+        <div class="card-tags">
+          <span class="tag">Flappy Bird homage</span>
+          <span class="tag">Keyboard &amp; touch</span>
+        </div>
+        <span class="play-btn">Take Flight</span>
+      </div>
+    </a>
+
+  </div>
+
+  <footer>Keep this page in the same folder as the game files — the cards link to them by filename. Drop in <code>theseus-labyrinth-screenshot.jpg</code> and <code>icarus-and-the-sun-screenshot.jpg</code> alongside it whenever you have screenshots, and they'll replace these placeholders automatically.</footer>
+
+</body>
+</html>
