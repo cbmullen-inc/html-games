@@ -87,6 +87,63 @@
   .lives{ display:flex; gap:5px; }
   .lives svg{ width:16px; height:16px; }
 
+  /* ---------- Settings row (difficulty + pace) ---------- */
+  .settings{
+    width:min(560px, 92vw);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    font-family:'Cinzel', serif;
+  }
+  .settings .group{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .settings .label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:var(--parchment-dim);
+  }
+  .diff-btns{
+    display:flex;
+    gap:4px;
+  }
+  .diff-btns button{
+    font-family:'Cinzel', serif;
+    font-size:11px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    background:transparent;
+    color:var(--parchment-dim);
+    border:1px solid var(--clay-line);
+    padding:5px 10px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  .diff-btns button.active{
+    background:linear-gradient(var(--clay), var(--clay-dark));
+    color:var(--parchment);
+    border-color:var(--gold);
+  }
+  .pace-slider{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .pace-slider input[type=range]{
+    width:110px;
+    accent-color:var(--gold);
+  }
+  .pace-slider .value{
+    font-size:12px;
+    color:var(--gold-bright);
+    min-width:3.4ch;
+  }
+
   /* ---------- Game frame ---------- */
   .frame-wrap{
     position:relative;
@@ -207,6 +264,22 @@
     <div class="block">
       <span class="label">Theseus</span>
       <span class="lives" id="lives"></span>
+    </div>
+  </div>
+
+  <div class="settings">
+    <div class="group">
+      <span class="label">Trial</span>
+      <div class="diff-btns" id="diffBtns">
+        <button data-diff="easy">Wanderer</button>
+        <button data-diff="normal" class="active">Hero</button>
+        <button data-diff="hard">Champion</button>
+      </div>
+    </div>
+    <div class="group pace-slider">
+      <span class="label">Pace</span>
+      <input type="range" id="paceSlider" min="0.6" max="1.4" step="0.05" value="1.0">
+      <span class="value" id="paceValue">1.00x</span>
     </div>
   </div>
 
@@ -458,7 +531,15 @@
     minotaurs:[],
     keys:{},
     lastTime:0,
-    invuln:0
+    invuln:0,
+    difficulty:'normal',
+    speedMult:1.0
+  };
+
+  const DIFFICULTY = {
+    easy:   { minotaurFactor:0.78, frightDuration:11, invuln:1.8, label:'Wanderer' },
+    normal: { minotaurFactor:0.95, frightDuration:8,  invuln:1.2, label:'Hero' },
+    hard:   { minotaurFactor:1.15, frightDuration:5,  invuln:0.7, label:'Champion' }
   };
 
   const PERSONALITIES = [
@@ -485,15 +566,20 @@
   }
 
   function setupLevel(){
+    const diff = DIFFICULTY[state.difficulty];
+    state.frightDuration = diff.frightDuration;
     state.frightTimer = 0;
     state.player = makeEntity(PLAYER_START.x, PLAYER_START.y, 5.0 + state.level*0.15);
+    state.player.baseSpeed = state.player.speed;
     state.player.desired = 'none';
     state.player.mouth = 0;
 
     const spots = spawnPositions();
     state.minotaurs = PERSONALITIES.map((p, i) => {
       const s = spots[i];
-      const m = makeEntity(s.x, s.y, 4.2 + state.level*0.12);
+      const baseSpeed = (4.2 + state.level*0.12) * diff.minotaurFactor;
+      const m = makeEntity(s.x, s.y, baseSpeed);
+      m.baseSpeed = baseSpeed;
       m.personality = p;
       m.frightened = false;
       m.dead = false; // "slain" -> returning to lair
@@ -501,7 +587,7 @@
       m.eyeDir = 'down';
       return m;
     });
-    state.invuln = 1.2;
+    state.invuln = diff.invuln;
   }
 
   function updateHud(){
@@ -679,6 +765,7 @@
     if (state.running){
       if (state.invuln > 0) state.invuln -= dt;
 
+      state.player.speed = state.player.baseSpeed * state.speedMult;
       advance(state.player, dt, playerRequestDir);
       eatAt(state.player.cx, state.player.cy);
 
@@ -691,11 +778,9 @@
       }
 
       state.minotaurs.forEach(m=>{
-        const spd = m.dead ? m.speed*2.2 : (m.frightened ? m.speed*0.55 : m.speed);
-        const savedSpeed = m.speed;
-        m.speed = spd;
+        const base = m.baseSpeed * state.speedMult;
+        m.speed = m.dead ? base*2.2 : (m.frightened ? base*0.55 : base);
         advance(m, dt, minotaurRequestDir);
-        m.speed = savedSpeed;
         if (m.dir !== 'none') m.eyeDir = m.dir;
 
         if (m.dead && m.cx===9 && m.cy===9){
@@ -932,6 +1017,25 @@
     setupLevel();
     updateHud();
     state.running = true;
+  });
+
+  document.querySelectorAll('#diffBtns button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#diffBtns button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.difficulty = btn.dataset.diff;
+      // re-apply immediately so the choice matters even mid-run
+      const diff = DIFFICULTY[state.difficulty];
+      state.frightDuration = diff.frightDuration;
+      state.minotaurs.forEach(m => { m.baseSpeed = (4.2 + state.level*0.12) * diff.minotaurFactor; });
+    });
+  });
+
+  const paceSlider = document.getElementById('paceSlider');
+  const paceValue = document.getElementById('paceValue');
+  paceSlider.addEventListener('input', ()=>{
+    state.speedMult = parseFloat(paceSlider.value);
+    paceValue.textContent = state.speedMult.toFixed(2) + 'x';
   });
 
   resizeCanvas();
