@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'theseus-labyrinth/theseus-labyrinth.html'
+      - 'theseus-labyrinth/*'
   workflow_dispatch:
 
 permissions:
