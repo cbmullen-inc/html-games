@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Orpheus and Eurydice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700;900&family=EB+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0b0806;
+    --void-2:#161009;
+    --clay:#b5541f;
+    --clay-dark:#6e3212;
+    --clay-line:#8a3f16;
+    --gold:#d4a017;
+    --gold-bright:#f0c95e;
+    --parchment:#e9dcc4;
+    --parchment-dim:#a99a80;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; min-height:100%;
+    background:
+      radial-gradient(ellipse at top, #1a120b 0%, var(--void) 55%),
+      var(--void);
+    color:var(--parchment);
+    font-family:'EB Garamond', serif;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior:none;
+  }
+  body{
+    display:flex; flex-direction:column; align-items:center;
+    min-height:100%;
+    padding:22px 14px 30px;
+    gap:14px;
+  }
+  .back-link{
+    font-family:'Cinzel', serif;
+    font-size:12px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    text-decoration:none;
+    border:1px solid rgba(212,160,23,0.3);
+    padding:6px 14px;
+    border-radius:2px;
+    transition:color .15s ease, border-color .15s ease;
+  }
+  .back-link:hover, .back-link:focus-visible{
+    color:var(--gold-bright);
+    border-color:rgba(212,160,23,0.6);
+  }
+  .back-link::before{ content:"‹ "; }
+
+  .eyebrow{
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    font-size:13px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--parchment-dim);
+    margin:0;
+  }
+  h1{
+    font-family:'Cinzel Decorative', serif;
+    font-weight:900;
+    font-size:clamp(24px, 6vw, 38px);
+    letter-spacing:.05em;
+    color:var(--gold-bright);
+    margin:2px 0 0 0;
+    text-shadow: 0 0 18px rgba(212,160,23,0.35), 0 2px 0 rgba(0,0,0,0.6);
+  }
+  .meander{
+    width:min(420px, 92vw);
+    height:14px;
+    background-image: repeating-linear-gradient(to right, var(--clay) 0 6px, transparent 6px 8px);
+    opacity:.55;
+    mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+  }
+
+  .hud{
+    width:min(420px, 92vw);
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'Cinzel', serif;
+    font-size:13px;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .hud .block{ display:flex; align-items:center; gap:8px; }
+  .hud .label{ color:var(--parchment-dim); font-size:11px; text-transform:uppercase; letter-spacing:.12em;}
+  .hud .value{ color:var(--gold-bright); font-size:16px; }
+  .trust-block{ flex:1; min-width:150px; }
+  .trust-bar{
+    flex:1;
+    height:10px;
+    background:rgba(233,220,196,0.12);
+    border:1px solid rgba(212,160,23,0.35);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .trust-fill{
+    height:100%;
+    width:100%;
+    background:linear-gradient(90deg,#d4a017,#f0c95e);
+    transition:width .25s ease, background .25s ease;
+  }
+  .trust-bar.low{
+    animation: trustWaver 0.35s infinite;
+    border-color: rgba(192,57,43,0.7);
+  }
+  .trust-bar.low .trust-fill{
+    background:linear-gradient(90deg,#8c2a1c,#c0392b);
+  }
+  @keyframes trustWaver{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-2px); }
+    75%{ transform:translateX(2px); }
+  }
+
+  .settings{
+    width:min(420px, 92vw);
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    font-family:'Cinzel', serif;
+  }
+  .settings .label{ font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--parchment-dim); }
+  .settings input[type=range]{ width:120px; accent-color:var(--gold); }
+  .settings .value{ font-size:12px; color:var(--gold-bright); min-width:3.4ch; }
+
+  .frame-wrap{
+    position:relative;
+    width:min(420px, 94vw);
+    aspect-ratio:420/640;
+    padding:10px;
+    background:
+      linear-gradient(var(--void-2), var(--void-2)) padding-box,
+      repeating-linear-gradient(45deg, var(--clay) 0 4px, var(--clay-dark) 4px 8px) border-box;
+    border:7px solid transparent;
+    border-radius:4px;
+    box-shadow: 0 0 0 1px rgba(212,160,23,0.25), 0 18px 50px rgba(0,0,0,0.6), inset 0 0 40px rgba(0,0,0,0.5);
+  }
+  canvas{
+    display:block; width:100%; height:100%;
+    background:var(--void);
+    border-radius:2px;
+    touch-action:none;
+    cursor:pointer;
+  }
+
+  .overlay{
+    position:absolute; inset:10px;
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column; text-align:center;
+    background:rgba(6,4,2,0.9);
+    border-radius:2px;
+    padding:22px;
+    gap:14px;
+  }
+  .overlay.show{ display:flex; }
+  .overlay h2{
+    font-family:'Cinzel Decorative', serif;
+    font-size:clamp(19px,5vw,26px);
+    color:var(--gold-bright);
+    margin:0;
+    letter-spacing:.03em;
+  }
+  .overlay p{
+    font-family:'EB Garamond', serif;
+    font-style:italic;
+    color:var(--parchment-dim);
+    max-width:32ch;
+    margin:0;
+    line-height:1.55;
+    font-size:14.5px;
+  }
+  .btn{
+    font-family:'Cinzel', serif;
+    font-size:13px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    background:linear-gradient(var(--clay), var(--clay-dark));
+    color:var(--parchment);
+    border:1px solid var(--gold);
+    padding:11px 24px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  .btn:hover{ box-shadow:0 4px 14px rgba(212,160,23,0.3); }
+
+  .hint{
+    font-size:12px;
+    color:var(--parchment-dim);
+    font-style:italic;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+  <a class="back-link" href="menu.html">Myths at Play</a>
+  <p class="eyebrow">A Homage to the Backward Glance</p>
+  <h1>Orpheus and Eurydice</h1>
+  <div class="meander"></div>
+
+  <div class="hud">
+    <div class="block">
+      <span class="label">Notes Played</span>
+      <span class="value" id="notesPlayed">0</span>
+    </div>
+    <div class="block trust-block" id="trustBlock" style="display:none;">
+      <span class="label">Trust</span>
+      <div class="trust-bar" id="trustBar"><div class="trust-fill" id="trustFill"></div></div>
+    </div>
+  </div>
+
+  <div class="settings">
+    <span class="label">Pace</span>
+    <input type="range" id="paceSlider" min="0.6" max="1.4" step="0.05" value="1.0">
+    <span class="value" id="paceValue">1.00x</span>
+  </div>
+
+  <div class="frame-wrap">
+    <canvas id="game"></canvas>
+
+    <div class="overlay show" id="introOverlay">
+      <h2>The Lyre's Three Strings</h2>
+      <p>As notes fall, pluck the matching string — <b>← / ↑ / →</b> (or A / S / D, or tap left / middle / right on touch) — the moment each one reaches the bridge.</p>
+      <button class="btn" id="beginBtn">Begin the Ascent</button>
+      <p class="hint">On the way back up, your playing must not falter — or doubt will make you turn</p>
+    </div>
+
+    <div class="overlay" id="courtOverlay">
+      <h2>Hades is Moved</h2>
+      <p>She may follow you to the world above — on one condition. You must not look back to see if she still walks behind you, not until you both stand in the light. Keep the song steady, and your trust in each other will hold.</p>
+      <button class="btn" id="ascendBtn">Lead Her Back</button>
+    </div>
+
+    <div class="overlay" id="endOverlay">
+      <h2 id="endTitle">The Light Came Too Soon</h2>
+      <p id="endText"></p>
+      <button class="btn" id="againBtn">Begin Again</button>
+    </div>
+  </div>
+
+  <p class="hint" id="liveHint">← / ↑ / → or A / S / D — pluck the string as the note reaches the bridge</p>
+
+<script>
+(function(){
+  "use strict";
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 420;
+  canvas.height = 640;
+  const W = canvas.width, H = canvas.height;
+  const GROUND_Y = H - 70;
+  const HIT_LINE_Y = 500;
+  const HIT_WINDOW = 32;
+  const NOTE_SPEED = 220;
+  const LANE_X = [W*0.28, W*0.5, W*0.72];
+  const STUMBLE_THRESHOLD = 35;
+  const WARN_THRESHOLD = 65;
+
+  const state = {
+    phase:'intro', // intro | descent | court | ascent | reveal | end
+    pace:1.0,
+    lastTime:0,
+    scrollX:0,
+    pattern:[],
+    songPatternIndex:0,
+    songTime:0,
+    ascentTotalT:0,
+    notes:[],
+    hitFlash:[0,0,0],
+    missFlash:[0,0,0],
+    trust:100,
+    warnedMid:false,
+    notesHit:0,
+    caption:null,
+    shakeT:0,
+    outcome:null,
+    revealT:0
+  };
+
+  function ORPHEUS_X(){ return W*0.32; }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function generatePattern(count, beatInterval){
+    const motif = [0,2,1,0,1,2,0,2,1,2,0,1,1,2,0,2,1,0,2,0];
+    const pattern = [];
+    let t = 1.0;
+    for (let i=0;i<count;i++){
+      pattern.push({ t, lane: motif[i % motif.length] });
+      t += beatInterval;
+    }
+    return pattern;
+  }
+
+  function resetAll(){
+    state.phase = 'intro';
+    state.scrollX = 0;
+    state.notes = [];
+    state.hitFlash = [0,0,0];
+    state.missFlash = [0,0,0];
+    state.trust = 100;
+    state.warnedMid = false;
+    state.notesHit = 0;
+    state.caption = null;
+    state.shakeT = 0;
+    state.outcome = null;
+    state.revealT = 0;
+    document.getElementById('notesPlayed').textContent = '0';
+    document.getElementById('trustBlock').style.display = 'none';
+    document.getElementById('introOverlay').classList.add('show');
+    document.getElementById('courtOverlay').classList.remove('show');
+    document.getElementById('endOverlay').classList.remove('show');
+    document.getElementById('liveHint').textContent = '← / ↑ / → or A / S / D — pluck the string as the note reaches the bridge';
+    updateTrustUI();
+  }
+
+  function startDescent(){
+    state.phase = 'descent';
+    state.pattern = generatePattern(10, 0.68);
+    state.songPatternIndex = 0;
+    state.songTime = 0;
+    state.notes = [];
+  }
+
+  function startAscent(){
+    state.phase = 'ascent';
+    state.pattern = generatePattern(32, 0.5);
+    state.songPatternIndex = 0;
+    state.songTime = 0;
+    state.notes = [];
+    state.trust = 100;
+    state.warnedMid = false;
+    state.ascentTotalT = state.pattern[state.pattern.length-1].t + 1.5;
+    document.getElementById('trustBlock').style.display = 'flex';
+    document.getElementById('liveHint').textContent = 'Keep your trust from breaking, or you will turn to look for her';
+    updateTrustUI();
+  }
+
+  function startReveal(outcome){
+    state.outcome = outcome;
+    state.phase = 'reveal';
+    state.revealT = 0;
+    state.notes = [];
+  }
+
+  function setCaption(text, duration){
+    state.caption = { text, t:0, duration };
+  }
+
+  function triggerStumble(){
+    state.shakeT = 0.3;
+    setCaption('She stumbles behind you...', 1.2);
+  }
+
+  function updateTrustUI(){
+    const fill = document.getElementById('trustFill');
+    const bar = document.getElementById('trustBar');
+    fill.style.width = state.trust + '%';
+    if (state.trust <= STUMBLE_THRESHOLD){ bar.classList.add('low'); }
+    else { bar.classList.remove('low'); }
+  }
+
+  /* =========================================================
+     INPUT
+  ========================================================= */
+  const KEY_LANE_MAP = {
+    ArrowLeft:0, KeyA:0,
+    ArrowUp:1, KeyS:1, Space:1,
+    ArrowRight:2, KeyD:2
+  };
+
+  function handleLaneInput(lane){
+    if (state.phase !== 'descent' && state.phase !== 'ascent') return;
+    let best = null, bestDist = Infinity;
+    for (const note of state.notes){
+      if (note.lane !== lane || note.hit) continue;
+      const d = Math.abs(note.y - HIT_LINE_Y);
+      if (d <= HIT_WINDOW && d < bestDist){ best = note; bestDist = d; }
+    }
+    if (best){
+      best.hit = true;
+      state.hitFlash[lane] = 0.25;
+      state.notesHit++;
+      document.getElementById('notesPlayed').textContent = state.notesHit;
+      if (state.phase === 'ascent'){
+        state.trust = clamp(state.trust + 3, 0, 100);
+        updateTrustUI();
+      }
+    } else {
+      state.missFlash[lane] = 0.18;
+    }
+  }
+
+  window.addEventListener('keydown', (e)=>{
+    const lane = KEY_LANE_MAP[e.code];
+    if (lane !== undefined){
+      if (!e.repeat) handleLaneInput(lane);
+      e.preventDefault();
+    }
+  }, {passive:false});
+
+  canvas.addEventListener('pointerdown', (e)=>{
+    const rect = canvas.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width;
+    const lane = relX < 0.34 ? 0 : (relX < 0.67 ? 1 : 2);
+    handleLaneInput(lane);
+    e.preventDefault();
+  }, {passive:false});
+
+  document.getElementById('beginBtn').addEventListener('click', ()=>{
+    document.getElementById('introOverlay').classList.remove('show');
+    startDescent();
+  });
+  document.getElementById('ascendBtn').addEventListener('click', ()=>{
+    document.getElementById('courtOverlay').classList.remove('show');
+    startAscent();
+  });
+  document.getElementById('againBtn').addEventListener('click', ()=>{
+    document.getElementById('endOverlay').classList.remove('show');
+    resetAll();
+  });
+
+  const paceSlider = document.getElementById('paceSlider');
+  const paceValue = document.getElementById('paceValue');
+  paceSlider.addEventListener('input', ()=>{
+    state.pace = parseFloat(paceSlider.value);
+    paceValue.textContent = state.pace.toFixed(2) + 'x';
+  });
+
+  /* =========================================================
+     SONG UPDATE — shared by the descent (a short practice
+     phrase) and the ascent (the real song, with stakes)
+  ========================================================= */
+  function updateSong(dt, isAscent){
+    const effDt = dt * state.pace;
+    state.scrollX += 55 * effDt;
+    state.songTime += effDt;
+
+    while (state.songPatternIndex < state.pattern.length &&
+           state.pattern[state.songPatternIndex].t <= state.songTime){
+      const n = state.pattern[state.songPatternIndex];
+      state.notes.push({ lane:n.lane, y:-10, hit:false });
+      state.songPatternIndex++;
+    }
+
+    for (let i = state.notes.length-1; i>=0; i--){
+      const note = state.notes[i];
+      if (note.hit){ state.notes.splice(i,1); continue; }
+      note.y += NOTE_SPEED * effDt;
+      if (note.y > HIT_LINE_Y + HIT_WINDOW){
+        state.notes.splice(i,1);
+        if (isAscent) handleMiss();
+        if (state.phase !== (isAscent ? 'ascent' : 'descent')) return; // phase may have changed mid-loop (fail)
+      }
+    }
+
+    for (let i=0;i<3;i++){
+      if (state.hitFlash[i] > 0) state.hitFlash[i] = Math.max(0, state.hitFlash[i]-dt);
+      if (state.missFlash[i] > 0) state.missFlash[i] = Math.max(0, state.missFlash[i]-dt);
+    }
+
+    if (state.songPatternIndex >= state.pattern.length && state.notes.length === 0){
+      if (isAscent){
+        if (state.trust > 0) startReveal('success');
+      } else {
+        state.phase = 'court';
+        document.getElementById('courtOverlay').classList.add('show');
+      }
+    }
+  }
+
+  function handleMiss(){
+    state.trust = clamp(state.trust - 16, 0, 100);
+    updateTrustUI();
+    if (state.trust <= 0){ startReveal('fail'); return; }
+    if (state.trust <= STUMBLE_THRESHOLD){
+      triggerStumble();
+    } else if (state.trust <= WARN_THRESHOLD && !state.warnedMid){
+      state.warnedMid = true;
+      setCaption('Her steps grow uncertain...', 1.4);
+    }
+  }
+
+  function updateReveal(dt){
+    state.revealT += dt;
+    if (state.revealT > 2.6){
+      state.phase = 'end';
+      if (state.outcome === 'fail'){
+        document.getElementById('endTitle').textContent = 'The Light Came Too Soon';
+        document.getElementById('endText').textContent =
+          "The song faltered, and doubt overtook him. He turned to see if she still followed — and in that glance, the thread between them broke. The shade of Eurydice slipped back into the dark, and this time, no song would call her home.";
+      } else {
+        document.getElementById('endTitle').textContent = 'Together in the Light';
+        document.getElementById('endText').textContent =
+          "The song did not break, and neither did his faith. Step by step, the dark gave way to grey, and grey to gold — and when at last he stood in the sun, Eurydice stood beside him, solid and whole and alive.";
+      }
+      document.getElementById('endOverlay').classList.add('show');
+    }
+  }
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+  function hexToRgb(hex){
+    const v = hex.replace('#','');
+    return { r: parseInt(v.slice(0,2),16), g: parseInt(v.slice(2,4),16), b: parseInt(v.slice(4,6),16) };
+  }
+  function lerpColor(a, b, t){
+    const pa = hexToRgb(a), pb = hexToRgb(b);
+    const r = Math.round(pa.r + (pb.r-pa.r)*t);
+    const g = Math.round(pa.g + (pb.g-pa.g)*t);
+    const bch = Math.round(pa.b + (pb.b-pa.b)*t);
+    return `rgb(${r},${g},${bch})`;
+  }
+
+  function drawTunnel(offsetX, tint){
+    const sky = ctx.createLinearGradient(0,0,0,GROUND_Y);
+    sky.addColorStop(0, tint.top);
+    sky.addColorStop(1, tint.bottom);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0,0,W,GROUND_Y);
+
+    ctx.fillStyle = tint.ground;
+    ctx.fillRect(0, GROUND_Y, W, H-GROUND_Y);
+    ctx.strokeStyle = 'rgba(212,160,23,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, GROUND_Y+0.5); ctx.lineTo(W, GROUND_Y+0.5); ctx.stroke();
+
+    const spacing = 130;
+    const start = -((offsetX) % spacing) - spacing;
+    for (let x = start; x < W + spacing; x += spacing){
+      drawColumnPair(x);
+    }
+  }
+
+  function drawColumnPair(x){
+    const colW = 20, colH = 120;
+    ctx.fillStyle = '#241a10';
+    ctx.fillRect(x, GROUND_Y-colH, colW, colH);
+    ctx.fillRect(W-x-colW, GROUND_Y-colH, colW, colH);
+    ctx.strokeStyle = 'rgba(181,84,31,0.3)';
+    ctx.lineWidth = 1;
+    for (let i=1;i<4;i++){
+      const gx = x + (colW/4)*i;
+      ctx.beginPath(); ctx.moveTo(gx, GROUND_Y-colH+4); ctx.lineTo(gx, GROUND_Y-4); ctx.stroke();
+      const gx2 = W-x-colW + (colW/4)*i;
+      ctx.beginPath(); ctx.moveTo(gx2, GROUND_Y-colH+4); ctx.lineTo(gx2, GROUND_Y-4); ctx.stroke();
+    }
+  }
+
+  function drawLyreLanes(){
+    ctx.save();
+    ctx.strokeStyle = 'rgba(240,201,94,0.25)';
+    ctx.lineWidth = 2;
+    for (let i=0;i<3;i++){
+      ctx.beginPath();
+      ctx.moveTo(LANE_X[i], 6);
+      ctx.lineTo(LANE_X[i], HIT_LINE_Y+14);
+      ctx.stroke();
+    }
+    // the bridge
+    ctx.strokeStyle = 'rgba(212,160,23,0.55)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(LANE_X[0]-30, HIT_LINE_Y);
+    ctx.lineTo(LANE_X[2]+30, HIT_LINE_Y);
+    ctx.stroke();
+
+    for (let i=0;i<3;i++){
+      const hf = state.hitFlash[i], mf = state.missFlash[i];
+      let r = 9, color = 'rgba(212,160,23,0.5)';
+      if (hf > 0){ r = 9 + hf*22; color = `rgba(240,201,94,${hf*3.2})`; }
+      else if (mf > 0){ r = 9 + mf*10; color = `rgba(192,57,43,${mf*3})`; }
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(LANE_X[i], HIT_LINE_Y, r, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawNotes(){
+    for (const note of state.notes){
+      const x = LANE_X[note.lane], y = note.y;
+      const near = Math.abs(y-HIT_LINE_Y) <= HIT_WINDOW;
+      ctx.save();
+      ctx.fillStyle = near ? '#f0c95e' : '#d4a017';
+      ctx.shadowColor = 'rgba(240,201,94,0.5)';
+      ctx.shadowBlur = near ? 8 : 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y-8);
+      ctx.lineTo(x+7, y);
+      ctx.lineTo(x, y+8);
+      ctx.lineTo(x-7, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawFigure(px, py, color, opacity, holdingLyre){
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(px-10, py+30);
+    ctx.lineTo(px-14, py-4);
+    ctx.quadraticCurveTo(px, py-12, px+14, py-4);
+    ctx.lineTo(px+10, py+30);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(px, py-16, 8, 0, Math.PI*2);
+    ctx.fill();
+    if (holdingLyre){
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px+10, py+4);
+      ctx.quadraticCurveTo(px+22, py-2, px+18, py+14);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px+11, py+6); ctx.lineTo(px+18, py+2);
+      ctx.moveTo(px+11, py+10); ctx.lineTo(px+19, py+7);
+      ctx.moveTo(px+11, py+14); ctx.lineTo(px+19, py+12);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawCaption(dt){
+    if (!state.caption) return;
+    state.caption.t += dt;
+    const { text, t, duration } = state.caption;
+    if (t > duration){ state.caption = null; return; }
+    const fadeIn = Math.min(1, t/0.2);
+    const fadeOut = Math.min(1, (duration-t)/0.4);
+    const alpha = Math.min(fadeIn, fadeOut);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#e9dcc4';
+    ctx.font = "italic 15px 'EB Garamond', serif";
+    ctx.textAlign = 'center';
+    ctx.fillText(text, W/2, 40);
+    ctx.restore();
+  }
+
+  function draw(dt){
+    ctx.save();
+    if (state.shakeT > 0){
+      ctx.translate((Math.random()-0.5)*6, (Math.random()-0.5)*6);
+    }
+
+    if (state.phase === 'descent' || state.phase === 'intro'){
+      drawTunnel(state.scrollX, {top:'#1a0f08', bottom:'#0b0806', ground:'#120b06'});
+      drawLyreLanes();
+      drawNotes();
+      drawFigure(ORPHEUS_X(), GROUND_Y, '#d9a066', 1, true);
+    } else if (state.phase === 'court'){
+      drawTunnel(state.scrollX, {top:'#241304', bottom:'#0b0806', ground:'#120b06'});
+      drawFigure(ORPHEUS_X(), GROUND_Y, '#d9a066', 1, true);
+    } else if (state.phase === 'ascent' || state.phase === 'reveal'){
+      const p = clamp(state.songTime / (state.ascentTotalT || 1), 0, 1);
+      const topColor = lerpColor('#0b0806', '#3a2410', p);
+      const bottomColor = lerpColor('#0b0806', '#241708', p);
+      const groundColor = lerpColor('#120b06', '#2a1a0a', p);
+      drawTunnel(state.scrollX, {top:topColor, bottom:bottomColor, ground:groundColor});
+
+      const glow = ctx.createRadialGradient(W/2, GROUND_Y*0.3, 10, W/2, GROUND_Y*0.3, 60+p*260);
+      glow.addColorStop(0, `rgba(240,201,94,${0.15+p*0.4})`);
+      glow.addColorStop(1, 'rgba(240,201,94,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0,0,W,GROUND_Y);
+
+      if (state.trust <= STUMBLE_THRESHOLD && state.phase === 'ascent'){
+        const danger = 1 - state.trust/STUMBLE_THRESHOLD;
+        const vign = ctx.createRadialGradient(W/2,H/2,H*0.25, W/2,H/2,H*0.65);
+        vign.addColorStop(0, 'rgba(192,57,43,0)');
+        vign.addColorStop(1, `rgba(140,42,28,${0.25+danger*0.25})`);
+        ctx.fillStyle = vign;
+        ctx.fillRect(0,0,W,H);
+      }
+
+      const flick = 0.25 + Math.abs(Math.sin(performance.now()/770))*0.2 - (state.shakeT>0 ? 0.15 : 0);
+      ctx.save();
+      ctx.globalAlpha = Math.max(0.05, flick);
+      const eGlow = ctx.createRadialGradient(50, GROUND_Y-30, 2, 50, GROUND_Y-30, 26);
+      eGlow.addColorStop(0, 'rgba(240,201,94,0.6)');
+      eGlow.addColorStop(1, 'rgba(240,201,94,0)');
+      ctx.fillStyle = eGlow;
+      ctx.beginPath(); ctx.arc(50, GROUND_Y-30, 26, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+
+      if (state.phase === 'ascent'){
+        drawLyreLanes();
+        drawNotes();
+      }
+      drawFigure(ORPHEUS_X(), GROUND_Y, '#d9a066', 1, true);
+
+      if (state.phase === 'reveal'){
+        const t = Math.min(1, state.revealT/2.6);
+        const flashColor = state.outcome === 'fail' ? '240,230,208' : '240,201,94';
+        ctx.save();
+        ctx.globalAlpha = t < 0.5 ? t*2*0.8 : (1-t)*2*0.8 + (state.outcome==='fail'?0.15:0.05);
+        ctx.fillStyle = `rgb(${flashColor})`;
+        ctx.fillRect(0,0,W,H);
+        ctx.restore();
+        if (t > 0.35){
+          const appear = clamp((t-0.35)/0.5, 0, 1);
+          if (state.outcome === 'fail'){
+            drawFigure(50, GROUND_Y-14, '#f0c95e', (1-appear)*0.9, false);
+          } else {
+            drawFigure(ORPHEUS_X()-46, GROUND_Y, '#f0c95e', appear, false);
+          }
+        }
+      }
+    }
+
+    drawCaption(dt);
+    ctx.restore();
+  }
+
+  /* =========================================================
+     LOOP
+  ========================================================= */
+  function tick(ts){
+    if (!state.lastTime) state.lastTime = ts;
+    let dt = (ts - state.lastTime)/1000;
+    state.lastTime = ts;
+    dt = Math.min(dt, 0.035);
+
+    if (state.shakeT > 0) state.shakeT = Math.max(0, state.shakeT - dt);
+
+    if (state.phase === 'descent') updateSong(dt, false);
+    else if (state.phase === 'ascent') updateSong(dt, true);
+    else if (state.phase === 'reveal') updateReveal(dt);
+
+    draw(dt);
+    requestAnimationFrame(tick);
+  }
+
+  resetAll();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
